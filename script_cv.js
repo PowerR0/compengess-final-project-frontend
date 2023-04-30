@@ -36,6 +36,25 @@ const getUserProfile = async () => {
 // TODO #3.3: Send Get Courses ("GET") request to backend server and filter the response to get Comp Eng Ess CV_cid
 //            and display the result on the webpage
 const getCompEngEssCid = async () => {
+  const options = {
+    method: "GET",
+    credentials: "include",
+  };
+  await fetch(
+    `http://${backendIPAddress}/courseville/get_course`,
+    options
+  )
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data.user);
+      document.getElementById(
+        "eng-name-info"
+      ).innerHTML = `${data.user.title_en} ${data.user.firstname_en} ${data.user.lastname_en}`;
+      document.getElementById(
+        "thai-name-info"
+      ).innerHTML = `${data.user.title_th} ${data.user.firstname_th} ${data.user.lastname_th}`;
+    })
+    .catch((error) => console.error(error));
   document.getElementById("ces-cid-value").innerHTML = "";
   console.log(
     "This function should fetch 'get courses' route from backend server and find cv_cid value of Comp Eng Ess."

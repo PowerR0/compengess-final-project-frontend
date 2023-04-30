@@ -2,44 +2,31 @@
 const backendIPAddress = "127.0.0.1:3000";
 
 let itemsData;
-
-// TODO #2.1: Edit group number
-const getGroupNumber = () => {
-  return 99;
-};
-
-// TODO #2.2: Show group members
-const showGroupMembers = async () => {
-  const member_list = document.getElementById("member-list");
-  member_list.innerHTML = "";
-  const member_dropdown = document.getElementById("name-to-add");
-  member_dropdown.innerHTML =
-    "<option value='0'>-- เลือกผู้ฝากซื้อ --</option>";
+// TODO #2.3: Send Get items ("GET") request to backend server and store the response in itemsData variable
+const getItemsFromDB = async () => {
   const options = {
     method: "GET",
-    credentials: "include",
-  };
-  await fetch(`http://${backendIPAddress}/items/members`, options)
+    credentials: "include"
+  }
+  await fetch(`http://${backendIPAddress}/items`, options)
     .then((response) => response.json())
     .then((data) => {
-      const members = data;
-      members.map((member) => {
-        member_list.innerHTML += `
-          <li>${member.full_name}</li>
-          `;
-        // ----------------- FILL IN YOUR CODE UNDER THIS AREA ONLY ----------------- //
-        member_dropdown.innerHTML += ``;
-        // ----------------- FILL IN YOUR CODE ABOVE THIS AREA ONLY ----------------- //
-      });
+      itemsData = data
     })
     .catch((error) => console.error(error));
 };
 
-// TODO #2.3: Send Get items ("GET") request to backend server and store the response in itemsData variable
-const getItemsFromDB = async () => {
-  console.log(
-    "This function should fetch 'get items' route from backend server."
-  );
+const getPoints = async () => {
+  const options = {
+    method: "GET",
+    credentials: "include"
+  }
+  await fetch(`http://${backendIPAddress}/items/point`, options)
+    .then((response) => response.json())
+    .then((data) => {
+      itemsData = data
+    })
+    .catch((error) => console.error(error));
 };
 
 // TODO #2.4: Show items in table (Sort itemsData variable based on created_date in ascending order)
@@ -47,16 +34,18 @@ const showItemsInTable = (itemsData) => {
   const table_body = document.getElementById("main-table-body");
   table_body.innerHTML = "";
   // ----------------- FILL IN YOUR CODE UNDER THIS AREA ONLY ----------------- //
-
+  itemsData.sort((a, b) => {
+    return a.deadline - b.deadline;
+  })
   // ----------------- FILL IN YOUR CODE ABOVE THIS AREA ONLY ----------------- //
   itemsData.map((item) => {
     // ----------------- FILL IN YOUR CODE UNDER THIS AREA ONLY ----------------- //
     table_body.innerHTML += `
         <tr id="${item.item_id}">
-            <td>${item.item}</td>
-            <td>Name</td>
-            <td>Price</td>
-            <td><button class="delete-row" onclick="deleteItem('${item.item_id}')">ลบ</button></td>
+            <td>${item.course_name}</td>
+            <td>${item.title}</td>
+            <td>${item.deadline}</td>
+            <td>${item.score}</td>
         </tr>
         `;
     // ----------------- FILL IN YOUR CODE ABOVE THIS AREA ONLY ----------------- //
@@ -81,6 +70,43 @@ const deleteItem = async (item_id) => {
   );
 };
 
+const getUserProfile = async () => {
+  const options = {
+    method: "GET",
+    credentials: "include",
+  };
+  await fetch(
+    `http://${backendIPAddress}/courseville/get_profile_info`,
+    options
+  )
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data.user);
+    })
+    .catch((error) => console.error(error));
+};
+
+const getCompEngEssCid = async () => {
+  const options = {
+    method: "GET",
+    credentials: "include",
+  };
+  await fetch(
+    `http://${backendIPAddress}/courseville/get_courses`,
+    options
+  )
+    .then((response) => response.json())
+    .then((data) => {console.log(data.data.student);})
+    .then((course) => {
+
+    })
+    .catch((error) => console.error(error));
+  // document.getElementById("ces-cid-value").innerHTML = "";
+  // console.log(
+  //   "This function should fetch 'get courses' route from backend server and find cv_cid value of Comp Eng Ess."
+  // );
+};
+
 const redrawDOM = () => {
   window.document.dispatchEvent(
     new Event("DOMContentLoaded", {
@@ -93,12 +119,20 @@ const redrawDOM = () => {
   document.getElementById("price-to-add").value = "";
 };
 
-document.getElementById("group-no").innerHTML = getGroupNumber();
+const authorizeApplication = () => {
+  window.location.href = `http://${backendIPAddress}/courseville/auth_app`;
+};
+
+const logout = async () => {
+  window.location.href = `http://${backendIPAddress}/courseville/logout`;
+};
+
+// document.getElementById("point").innerHTML = getPoints();
 
 document.addEventListener("DOMContentLoaded", async function (event) {
-  console.log("Showing group members.");
-  await showGroupMembers();
-  console.log("Showing items from database.");
+  // await authorizeApplication();
+  console.log("Getting items from database.");
   await getItemsFromDB();
+  console.log("Showing items from database.");
   showItemsInTable(itemsData);
 });
