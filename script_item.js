@@ -1,7 +1,7 @@
 // TODO #4.0: Change this IP address to EC2 instance public IP address when you are going to deploy this web application
 const backendIPAddress = "127.0.0.1:3000";
 
-let itemsData;
+let itemsData, courses = [];
 // TODO #2.3: Send Get items ("GET") request to backend server and store the response in itemsData variable
 const getItemsFromDB = async () => {
   const options = {
@@ -16,30 +16,16 @@ const getItemsFromDB = async () => {
     .catch((error) => console.error(error));
 };
 
-const getPoints = async () => {
-  const options = {
-    method: "GET",
-    credentials: "include"
-  }
-  await fetch(`http://${backendIPAddress}/items/point`, options)
-    .then((response) => response.json())
-    .then((data) => {
-      itemsData = data
-    })
-    .catch((error) => console.error(error));
-};
-
 // TODO #2.4: Show items in table (Sort itemsData variable based on created_date in ascending order)
 const showItemsInTable = (itemsData) => {
   const table_body = document.getElementById("main-table-body");
   table_body.innerHTML = "";
-  // ----------------- FILL IN YOUR CODE UNDER THIS AREA ONLY ----------------- //
+
   itemsData.sort((a, b) => {
     return a.deadline - b.deadline;
   })
-  // ----------------- FILL IN YOUR CODE ABOVE THIS AREA ONLY ----------------- //
+
   itemsData.map((item) => {
-    // ----------------- FILL IN YOUR CODE UNDER THIS AREA ONLY ----------------- //
     table_body.innerHTML += `
         <tr id="${item.item_id}">
             <td>${item.course_name}</td>
@@ -48,7 +34,6 @@ const showItemsInTable = (itemsData) => {
             <td>${item.score}</td>
         </tr>
         `;
-    // ----------------- FILL IN YOUR CODE ABOVE THIS AREA ONLY ----------------- //
   });
 };
 
@@ -86,7 +71,7 @@ const getUserProfile = async () => {
     .catch((error) => console.error(error));
 };
 
-const getCompEngEssCid = async () => {
+const getCid = async () => {
   const options = {
     method: "GET",
     credentials: "include",
@@ -96,14 +81,72 @@ const getCompEngEssCid = async () => {
     options
   )
     .then((response) => response.json())
-    .then((data) => {console.log(data.data.student);})
-    .then((course) => {
-
+    .then((data) => {
+      temp = data.data.student
+      
+      for(let i=0;i<temp.length;i++){
+        // console.log(temp[i],i);
+        if(temp[i].semester == 2)
+          courses = courses.concat(temp[i]);
+      }
     })
     .catch((error) => console.error(error));
-  // document.getElementById("ces-cid-value").innerHTML = "";
+    // console.log(courses);
   // console.log(
   //   "This function should fetch 'get courses' route from backend server and find cv_cid value of Comp Eng Ess."
+  // );
+};
+
+const createAssignmentTable = async () => {
+  const table_body = document.getElementById("main-table-body");
+  table_body.innerHTML = "";
+
+  const options = {
+    method: "GET",
+    credentials: "include",
+  };
+  let allAssignments = [];
+  for(let i=0; i<courses.length; i++){
+    await fetch(
+      `http://${backendIPAddress}/courseville/get_course_assignments/${courses[i].cv_cid}`,
+      options
+    )
+      .then((response) => response.json())
+      .then((data) => {assignment = data.data;})
+      .catch((error) => console.error(error));
+      // console.log(assignment);
+      for(let j=0; j<assignment.length; j++){
+        await fetch(
+          `http://${backendIPAddress}/courseville/get_assignment_detail/${assignment[j].itemid}`,
+          options
+        )
+          .then((response) => response.json())
+          .then((data2) => {
+            // console.log(data2.data);
+            deadline = data2.data.duedate;
+          })
+        allAssignments = allAssignments.concat([[courses[i].course_no, assignment[j].title, deadline]])
+        // console.log(assignment);
+        // console.log([courses[i].course_no, assignment[j].title, deadline]);
+      }
+  }
+  console.log(allAssignments);
+  // allAssignments.map(item) => {
+  for(let i=0;i<allAssignments.length;i++){
+    table_body.innerHTML += `
+      <tr>
+          <td>${allAssignments[i][0]}</td>
+          <td>${allAssignments[i][1]}</td>
+          <td>${allAssignments[i][2]}</td>
+          <td>1</td>
+      </tr>
+    `;
+  }
+    
+  // }
+  
+  // console.log(
+  //   "This function should fetch 'get course assignments' route from backend server and show assignments in the table."
   // );
 };
 
@@ -127,12 +170,13 @@ const logout = async () => {
   window.location.href = `http://${backendIPAddress}/courseville/logout`;
 };
 
-// document.getElementById("point").innerHTML = getPoints();
-
 document.addEventListener("DOMContentLoaded", async function (event) {
-  // await authorizeApplication();
   console.log("Getting items from database.");
   await getItemsFromDB();
-  console.log("Showing items from database.");
-  showItemsInTable(itemsData);
+  console.log("Creating assignments table.");
+  await getCid();
+  await createAssignmentTable();
+  // console.log("Showing items from database.");
+  // showItemsInTable(itemsData);
+  console.log("Success");
 });
