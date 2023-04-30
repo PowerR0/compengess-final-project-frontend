@@ -41,7 +41,7 @@ const getCompEngEssCid = async () => {
     credentials: "include",
   };
   await fetch(
-    `http://${backendIPAddress}/courseville/get_course`,
+    `http://${backendIPAddress}/courseville/get_courses`,
     options
   )
     .then((response) => response.json())
